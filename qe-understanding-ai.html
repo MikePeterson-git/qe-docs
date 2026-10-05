@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A QE Perspective on Gen AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16233F; --paper:#F6F4EE; --panel:#FFFFFF; --accent:#C6791F;
+    --pass:#3F7A5E; --line:#D8D3C4; --muted:#5B6478; --body-text:#232B3D;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  html{scroll-padding-top: calc(72px + env(safe-area-inset-top,0px));}
+  *,*::before,*::after{box-sizing:inherit;}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#EDE7D8; --paper:#12161F; --panel:#181D28; --accent:#E1A054;
+      --pass:#6FBE93; --line:#2B3242; --muted:#8D96A8; --body-text:#DCD9CD;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#EDE7D8; --paper:#12161F; --panel:#181D28; --accent:#E1A054;
+    --pass:#6FBE93; --line:#2B3242; --muted:#8D96A8; --body-text:#DCD9CD;
+  }
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--body-text);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'IBM Plex Serif', Georgia, serif; color:var(--ink); font-weight:500; line-height:1.15; margin:0;}
+  p{line-height:1.65; max-width:64ch; margin:0 0 1rem;}
+  a{color:inherit;}
+  code, .mono{font-family:'IBM Plex Mono', monospace;}
+
+  /* Top bar */
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    padding-top:env(safe-area-inset-top,0px);
+    background:var(--paper); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+    padding-left:1.1rem; padding-right:1.1rem; height:56px;
+  }
+  .topbar .brand{font-family:'IBM Plex Serif',serif; font-size:1rem; color:var(--ink);}
+  .navtoggle{
+    background:none; border:1px solid var(--line); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:.75rem; letter-spacing:.02em;
+    padding:.4rem .7rem; border-radius:3px; cursor:pointer;
+  }
+  @media (min-width:900px){ .navtoggle{display:none;} }
+
+  .layout{display:flex; max-width:1180px; margin:0 auto;}
+
+  /* Sidebar */
+  nav.toc{
+    width:260px; flex-shrink:0; border-right:1px solid var(--line);
+    padding:1.5rem 1.1rem 3rem;
+    position:sticky; top:56px; align-self:flex-start;
+    height:calc(100vh - 56px); overflow-y:auto;
+  }
+  nav.toc .eyebrow{font-size:.7rem; color:var(--muted); margin-bottom:1rem;}
+  nav.toc ol{list-style:none; margin:0; padding:0; counter-reset:sec;}
+  nav.toc li{counter-increment:sec; margin-bottom:.15rem;}
+  nav.toc a{
+    display:flex; gap:.6rem; text-decoration:none; color:var(--muted);
+    font-size:.88rem; padding:.4rem .5rem; border-radius:3px;
+    border-left:2px solid transparent;
+  }
+  nav.toc a::before{
+    content:counter(sec,decimal-leading-zero); font-family:'IBM Plex Mono',monospace;
+    font-size:.72rem; opacity:.7; padding-top:.1rem;
+  }
+  nav.toc a.active{color:var(--ink); border-left-color:var(--accent); background:var(--panel);}
+  nav.toc a:hover{color:var(--ink);}
+  @media (max-width:899px){
+    nav.toc{
+      position:fixed; top:56px; left:0; right:0; height:calc(100vh - 56px);
+      background:var(--paper); transform:translateX(-100%); transition:transform .2s ease;
+      z-index:20; width:100%; border-right:none;
+    }
+    nav.toc.open{transform:translateX(0);}
+  }
+
+  main{flex:1; min-width:0; padding:0 1.3rem 6rem;}
+  section{
+    padding:3.4rem 0 2.6rem; border-bottom:1px solid var(--line);
+    max-width:720px;
+  }
+  section:last-of-type{border-bottom:none;}
+  .kicker{
+    font-size:.72rem; color:var(--accent); font-family:'IBM Plex Mono',monospace;
+    margin-bottom:.6rem;
+  }
+  h2{font-size:1.7rem; margin-bottom:1rem;}
+  h3{font-size:1.08rem; margin:1.6rem 0 .5rem; color:var(--ink);}
+
+  /* Cover */
+  .cover{padding-top:2.6rem;}
+  .cover h1{font-size:clamp(2.1rem,5vw,3.1rem); max-width:14ch;}
+  .cover .sub{font-size:1.05rem; color:var(--muted); max-width:46ch; margin-top:1rem;}
+  .cover .meta{
+    display:flex; gap:1.6rem; margin-top:2rem; font-family:'IBM Plex Mono',monospace;
+    font-size:.75rem; color:var(--muted); flex-wrap:wrap;
+  }
+  .cover .meta span{border-left:2px solid var(--accent); padding-left:.5rem;}
+
+  /* Card / callout devices */
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:4px;
+    padding:1.3rem 1.4rem; margin:1.4rem 0;
+  }
+  .panel h3{margin-top:0;}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1.4rem 0;}
+  @media (max-width:640px){ .grid2{grid-template-columns:1fr;} }
+  .fail-card{border:1px solid var(--line); border-radius:4px; padding:1rem 1.1rem; background:var(--panel);}
+  .fail-card .tag{font-family:'IBM Plex Mono',monospace; font-size:.68rem; color:var(--accent); display:block; margin-bottom:.4rem;}
+
+  table{border-collapse:collapse; width:100%; margin:1.2rem 0; font-size:.92rem;}
+  th,td{text-align:left; padding:.55rem .7rem; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--muted); font-weight:500;}
+
+  ul.plain{padding-left:1.1rem; margin:0 0 1rem;}
+  ul.plain li{margin-bottom:.5rem; line-height:1.6;}
+
+  /* Checklist */
+  .checklist{list-style:none; margin:1.2rem 0; padding:0;}
+  .checklist li{
+    display:flex; gap:.7rem; padding:.65rem 0; border-bottom:1px solid var(--line);
+    align-items:flex-start;
+  }
+  .checklist li:last-child{border-bottom:none;}
+  .box{
+    width:16px; height:16px; border:1.5px solid var(--muted); border-radius:3px;
+    margin-top:.2rem; flex-shrink:0;
+  }
+  .status{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:.68rem;
+    padding:.1rem .45rem; border-radius:2px; margin-left:.5rem;
+  }
+  .status.pass{color:var(--pass); border:1px solid var(--pass);}
+  .status.watch{color:var(--accent); border:1px solid var(--accent);}
+
+  footer{max-width:720px; padding:2.2rem 0 4rem; color:var(--muted); font-size:.85rem;}
+
+  ::selection{background:var(--accent); color:var(--paper);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">QE & Gen AI</span>
+  <button class="navtoggle" id="navToggle">Contents</button>
+</div>
+
+<div class="layout">
+  <nav class="toc" id="toc">
+    <div class="eyebrow">On this page</div>
+    <ol>
+      <li><a href="#start" data-nav>Start here</a></li>
+      <li><a href="#how" data-nav>How these systems work</a></li>
+      <li><a href="#limits" data-nav>Where they break</a></li>
+      <li><a href="#qe" data-nav>Why this matters for QE</a></li>
+      <li><a href="#process" data-nav>AI inside the test process</a></li>
+      <li><a href="#mindset" data-nav>A verification mindset</a></li>
+      <li><a href="#checklist" data-nav>Adoption checklist</a></li>
+      <li><a href="#further" data-nav>Keep practicing</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section class="cover" id="start">
+      <div class="kicker">UNDERSTANDING AI</div>
+      <h1>A QE Perspective on Gen AI</h1>
+      <p class="sub">A short guide to understanding AI well enough to trust it correctly, written for quality engineers.</p>
+
+      <div class="panel" style="margin-top:2.2rem;">
+        <h3>What "understanding AI" means here</h3>
+        <p>It means understanding, at a working level, what a model is doing when it answers you, what kind of mistakes it makes, and how much confidence any given output deserves. That's the same skill you already apply to a system under test. You're just pointing it at a new kind of system. Nothing in the foundations is specific to QE, and the same ideas apply to any use of AI; the later sections show what they look like in testing work.</p>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="kicker">FOUNDATIONS</div>
+      <h2>How these systems work</h2>
+      <p>Large language models are pattern predictors. Given some text, a model estimates which next word is most likely, over and over, using patterns learned from enormous amounts of text during training. Nothing in that process checks the output against reality as it generates it. The model isn't looking anything up unless a tool explicitly does that for it.</p>
+      <p>Two consequences follow from that mechanism, and the rest of this guide builds on them:</p>
+      <ul class="plain">
+        <li><strong>Fluent is not the same as correct.</strong> A model produces confident, well-formed language whether or not the underlying claim is true.</li>
+        <li><strong>Outputs are probabilistic, not deterministic.</strong> The same prompt can produce different answers on different runs. That changes how you write a test around one.</li>
+      </ul>
+
+      <h3>How next-word prediction works</h3>
+      <p>Most of today's models are built on the transformer architecture, and the mechanism at its core is called attention. Text is broken into tokens (roughly word-sized pieces), and for each token the model computes how relevant every other token in the input is to it (which words matter for interpreting "it" in a sentence, say). That weighting happens across many stacked layers, each refining the picture, and the final layer turns the result into a probability distribution over what token comes next. One gets sampled, it's appended to the input, and the whole process runs again for the next token. There's no separate step where the model checks that distribution against the world. The probabilities come entirely from patterns in training data.</p>
+
+      <h3>Why they sound human</h3>
+      <p>Models are trained on human-written text, so they produce first-person language, hedges, apologies, and expressions of confidence. There's no internal state behind them; that's just the conversational pattern in the data they learned from. An agent that says "I checked the logs and I'm confident this passed" is generating a plausible-sounding sentence, not reporting on a persistent mental process it has. Multi-turn or multi-step agents make this easier to fall for: each new response that references "what I did earlier" reads as continuity, but that continuity is only as real as what's been logged and passed back in as input. Treat an agent's self-description of its own actions the same way you'd treat any other unverified claim: check the underlying log or artifact, not the sentence describing it.</p>
+
+      <h3 id="memory">Memory has to be designed, piece by piece</h3>
+      <p>"Memory" in an agent is shorthand for several distinct responsibilities a system has to be engineered for separately. Know the categories, because each one fails differently and needs to be checked differently.</p>
+      <table>
+        <tr><th>Type</th><th>What it holds</th></tr>
+        <tr><td>Working</td><td>Whatever's in play for the current interaction (system instructions, recent messages, tool outputs), bounded by the context window.</td></tr>
+        <tr><td>Semantic</td><td>Stable facts and preferences meant to persist across conversations, like a name or a time zone.</td></tr>
+        <tr><td>Episodic</td><td>A record of specific past events, such as what a previous test run failed on and why, kept to inform future actions.</td></tr>
+        <tr><td>Procedural</td><td>The rules and workflows the agent is meant to follow, such as validation steps and when to ask for human approval.</td></tr>
+        <tr><td>External</td><td>Information living outside the model entirely, in a database, document store, or inbox, pulled in on demand.</td></tr>
+        <tr><td>Parametric</td><td>General knowledge baked into the model's trained weights. No retrieval step, just what it "already knows."</td></tr>
+        <tr><td>Prospective</td><td>A future task the agent is meant to act on later, triggered by a time or condition rather than run immediately.</td></tr>
+      </table>
+      <p>The QE angle: each type implies a different thing to verify. Working memory fails when context gets truncated or crowded out before it should. Semantic and episodic memory fail when facts persist that shouldn't, or don't persist when they should. External memory failures are ordinary integration bugs. The retrieval step is a normal system dependency, and it fails in normal ways. Treating "the agent's memory" as one thing misses all of this. Check each type against its own failure mode.</p>
+    </section>
+
+    <section id="limits">
+      <div class="kicker">FAILURE MODES</div>
+      <h2>Where they break</h2>
+      <p>Every failure mode below is a variation on the same root cause: the model is producing something plausible-sounding, not something verified.</p>
+      <div class="grid2">
+        <div class="fail-card">
+          <span class="tag">HALLUCINATION</span>
+          Stating something false with the same confident tone as something true, such as a fabricated API method, a citation that doesn't exist, a log line that was never emitted.
+        </div>
+        <div class="fail-card">
+          <span class="tag">NON-DETERMINISM</span>
+          Re-running an identical prompt can yield a different answer, which breaks the usual assumption that identical input produces identical output.
+        </div>
+        <div class="fail-card">
+          <span class="tag">CONTEXT LOSS</span>
+          Long conversations or large documents can push earlier detail out of effective attention, so instructions given early get dropped without warning.
+        </div>
+        <div class="fail-card">
+          <span class="tag">TRAINED-IN BIAS</span>
+          Patterns learned from training data, including skewed or outdated ones, surface in outputs without any explicit signal that they're being applied.
+        </div>
+      </div>
+      <p>None of this makes the tools unusable. It defines the shape of the review process they require, which overlaps with your existing job.</p>
+    </section>
+
+    <section id="qe">
+      <div class="kicker">TWO ROLES</div>
+      <h2>Why this matters for QE</h2>
+      <p>Quality engineering already carries the right instincts for working with AI: treating unverified output as unverified, looking for the failure case before trusting the happy path, and not letting a component's own self-report stand in for independent evidence. AI output calls for that same discipline, and it matters more here, since it fails by sounding right rather than by throwing an error.</p>
+      <p>AI shows up in QE in two different roles:</p>
+      <table>
+        <tr><th>AI as subject under test</th><th>AI as a tool inside your process</th></tr>
+        <tr>
+          <td>Your product ships an AI feature (a chatbot, a recommendation engine, an AI-assisted search). You need to test its behavior the way you'd test anything else, plus the new failure classes it introduces.</td>
+          <td>You use an AI assistant to write test cases, summarize logs, or draft automation. Its output becomes an input to your process and needs the same scrutiny as any other unverified input.</td>
+        </tr>
+      </table>
+      <p>This guide focuses mainly on the second: using AI well as part of how you do QE, while staying alert to the first whenever it's part of your scope.</p>
+    </section>
+
+    <section id="process">
+      <div class="kicker">IN PRACTICE</div>
+      <h2>AI inside the test process</h2>
+
+      <h3>Test case and scenario drafting</h3>
+      <p>AI is useful for generating a first pass of edge cases from a spec or user story. It's fast, and breadth is what pattern-matching is good at. Treat the output as a draft list to prune and verify, not a finished suite. It will confidently include cases that don't apply to your system and miss ones that require knowledge it doesn't have, like undocumented business rules.</p>
+
+      <h3>Log and failure triage</h3>
+      <p>Summarizing a long test run's logs to point you at likely root causes is a strong use case, because the model is pattern-matching against text you can verify line by line. Checking a suggested root cause against the actual log line it's citing, rather than the summary of it, catches most of the errors that slip through.</p>
+
+      <h3>Automation code</h3>
+      <p>Review AI-generated test scripts the way you'd review a human's first draft: check that the assertions assert something meaningful, not just that the code runs. A generated test that never fails is a common and easy-to-miss failure mode of its own.</p>
+
+      <h3>Autonomous test agents</h3>
+      <p>Newer tools let an AI agent explore an application, generate steps, and execute them with no human writing the individual actions, such as clicking through a UI or driving an API on its own. That autonomy removes the usual per-step review, so verification has to move to the boundaries: what the agent was authorized to touch, what evidence it logs for each action it took, and how its results get audited afterward rather than trusted in the moment.</p>
+
+      <h3>Using AI as a test oracle</h3>
+      <p>This is the highest-risk use. Asking a model "does this output look correct?" combines two unverified things, its judgment and the thing being judged, and non-determinism means the same check can pass one run and fail the next with no code change. When it's unavoidable, pinning the model version and logging the full response turns a pass into a lead worth confirming rather than a verdict.</p>
+    </section>
+
+    <section id="mindset">
+      <div class="kicker">MINDSET</div>
+      <h2>A verification mindset for AI output</h2>
+      <p>The habit that transfers most from QE to working with AI: an AI's output is a claim, not a fact, until something independent of the model has checked it. For anything a model gives you, ask:</p>
+      <ul class="plain">
+        <li><strong>What would I check to falsify this?</strong> If there's no answer, treat the claim as unverified.</li>
+        <li><strong>Does this cite something checkable?</strong> A file, a line number, a log entry you can open yourself.</li>
+        <li><strong>Would this answer change on a re-run?</strong> If the question is close to a coin flip for the model, don't let one run stand as your evidence.</li>
+        <li><strong>What does it cost if it's wrong?</strong> A wrong suggested test name is cheap. A wrong "this is safe to release" is not, so scale your review effort accordingly.</li>
+      </ul>
+    </section>
+
+    <section id="checklist">
+      <div class="kicker">APPLIED</div>
+      <h2>A working adoption checklist</h2>
+      <p>A starting point for introducing AI tools into a QE workflow without introducing new, invisible defects.</p>
+      <ul class="checklist">
+        <li><span class="box"></span><span>Every AI-generated test case is run and its result inspected before it's added to the suite <span class="status pass">verify</span></span></li>
+        <li><span class="box"></span><span>AI-suggested root causes are checked against the raw log line, not just the summary <span class="status pass">verify</span></span></li>
+        <li><span class="box"></span><span>AI is not used as the sole pass/fail oracle for release-blocking decisions <span class="status watch">high risk</span></span></li>
+        <li><span class="box"></span><span>Model version and prompt are logged wherever AI output feeds a test artifact, for reproducibility <span class="status pass">verify</span></span></li>
+        <li><span class="box"></span><span>Generated automation code is reviewed for meaningful assertions, not just successful execution <span class="status pass">verify</span></span></li>
+        <li><span class="box"></span><span>Anyone relying on AI output knows what a hallucinated result would look like in this specific context <span class="status watch">team readiness</span></span></li>
+      </ul>
+    </section>
+
+    <section id="further">
+      <div class="kicker">CLOSING</div>
+      <h2>Keep practicing</h2>
+      <p>Your sense of where AI goes wrong needs upkeep, the same way your sense of where a codebase breaks does. The fastest way to build it is the most familiar one: use the tools on real work, look for where they're wrong, and keep a running list of the failure patterns you see most often.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+  const toc = document.getElementById('toc');
+  const toggle = document.getElementById('navToggle');
+  toggle.addEventListener('click', () => toc.classList.toggle('open'));
+  document.querySelectorAll('nav.toc a').forEach(a=>{
+    a.addEventListener('click', ()=> toc.classList.remove('open'));
+  });
+
+  const links = document.querySelectorAll('nav.toc a[data-nav]');
+  const sections = Array.from(links).map(l => document.querySelector(l.getAttribute('href')));
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        const id = '#' + entry.target.id;
+        links.forEach(l=> l.classList.toggle('active', l.getAttribute('href')===id));
+      }
+    });
+  }, {rootMargin:'-40% 0px -55% 0px', threshold:0});
+  sections.forEach(s=> s && io.observe(s));
+</script>
+
+</body>
+</html>
